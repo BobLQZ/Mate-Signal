@@ -15,8 +15,14 @@ import net.minecraftforge.registries.ForgeRegistries;
 import java.util.*;
 
 public class MateSignalConfigScreen extends Screen {
-    enum FilterMode { ALL, ACTIVE, INACTIVE }
-    enum View { MAIN, MOBS }
+
+    enum FilterMode {
+        ALL, ACTIVE, INACTIVE
+    }
+
+    enum View {
+        MAIN, MOBS
+    }
 
     private final Screen parent;
 
@@ -49,7 +55,7 @@ public class MateSignalConfigScreen extends Screen {
     private int listBottom;
     private int listLeft;
     private int listRight;
-    private int rowH = 18;
+    private final int rowH = 18;
     private double scroll;
     private boolean draggingScrollbar;
 
@@ -71,8 +77,11 @@ public class MateSignalConfigScreen extends Screen {
         this.parent = parent;
     }
 
+    @Override
     protected void init() {
-        for (Entry e : entries) removeWidget(e.toggle);
+        for (Entry e : entries) {
+            removeWidget(e.toggle);
+        }
         entries.clear();
 
         radiusBox = new EditBox(this.font, 0, 0, 40, 20, Component.literal("radius"));
@@ -80,41 +89,72 @@ public class MateSignalConfigScreen extends Screen {
         radiusBox.setEditable(false);
 
         minusBtn = Button.builder(Component.literal("-"), b -> step(-1)).bounds(0, 0, 20, 20).build();
-        plusBtn  = Button.builder(Component.literal("+"), b -> step(+1)).bounds(0, 0, 20, 20).build();
+        plusBtn = Button.builder(Component.literal("+"), b -> step(+1)).bounds(0, 0, 20, 20).build();
 
         addRenderableWidget(minusBtn);
         addRenderableWidget(radiusBox);
         addRenderableWidget(plusBtn);
 
-        dayBtn = CycleButton.onOffBuilder(Config.DAY_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b,v)->{});
-        nightBtn = CycleButton.onOffBuilder(Config.NIGHT_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b,v)->{});
-        lowHealthBtn = CycleButton.onOffBuilder(Config.LOW_HEALTH_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b,v)->{});
-        lowHungerBtn = CycleButton.onOffBuilder(Config.LOW_HUNGER_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b,v)->{});
+        dayBtn = CycleButton.onOffBuilder(Config.DAY_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b, v) -> {
+        });
+        nightBtn = CycleButton.onOffBuilder(Config.NIGHT_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b, v) -> {
+        });
+        lowHealthBtn = CycleButton.onOffBuilder(Config.LOW_HEALTH_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b, v) -> {
+        });
+        lowHungerBtn = CycleButton.onOffBuilder(Config.LOW_HUNGER_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b, v) -> {
+        });
         addRenderableWidget(dayBtn);
         addRenderableWidget(nightBtn);
         addRenderableWidget(lowHealthBtn);
         addRenderableWidget(lowHungerBtn);
 
-        deathBtn = CycleButton.onOffBuilder(Config.DEATH_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b,v)->{});
-        rainBtn = CycleButton.onOffBuilder(Config.RAIN_START_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b,v)->{});
-        drownBtn = CycleButton.onOffBuilder(Config.DROWNING_HALF_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b,v)->{});
-        sleepBtn = CycleButton.onOffBuilder(Config.SLEEP_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b,v)->{});
-        craftBtn = CycleButton.onOffBuilder(Config.CRAFTING_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b,v)->{});
+        deathBtn = CycleButton.onOffBuilder(Config.DEATH_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b, v) -> {
+        });
+        rainBtn = CycleButton.onOffBuilder(Config.RAIN_START_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b, v) -> {
+        });
+        drownBtn = CycleButton.onOffBuilder(Config.DROWNING_HALF_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b, v) -> {
+        });
+        sleepBtn = CycleButton.onOffBuilder(Config.SLEEP_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b, v) -> {
+        });
+        craftBtn = CycleButton.onOffBuilder(Config.CRAFTING_MESSAGE.get()).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b, v) -> {
+        });
         addRenderableWidget(deathBtn);
         addRenderableWidget(rainBtn);
         addRenderableWidget(drownBtn);
         addRenderableWidget(sleepBtn);
         addRenderableWidget(craftBtn);
 
-        configureMobsBtn = Button.builder(Component.literal("Conf."), b -> { view = View.MOBS; clampScroll(); layoutForCurrentView(); updateVisibility(); })
+        configureMobsBtn = Button.builder(Component.literal("Conf."), b -> {
+            view = View.MOBS;
+            clampScroll();
+            layoutForCurrentView();
+            updateVisibility();
+        })
                 .bounds(0, 0, 64, 18).build();
         addRenderableWidget(configureMobsBtn);
 
         int wAll = 100, wAct = 120, wInact = 130, h = 20;
-        showAllBtn = Button.builder(Component.literal("Show All"), b -> { filterMode = FilterMode.ALL; scroll = 0; clampScroll(); }).bounds(0, 0, wAll, h).build();
-        showActiveBtn = Button.builder(Component.literal("Show Active"), b -> { filterMode = FilterMode.ACTIVE; scroll = 0; clampScroll(); }).bounds(0, 0, wAct, h).build();
-        showUnactiveBtn = Button.builder(Component.literal("Show Unactive"), b -> { filterMode = FilterMode.INACTIVE; scroll = 0; clampScroll(); }).bounds(0, 0, wInact, h).build();
-        backBtn = Button.builder(Component.literal("Back"), b -> { view = View.MAIN; clampScroll(); layoutForCurrentView(); updateVisibility(); }).bounds(0, 0, 70, 20).build();
+        showAllBtn = Button.builder(Component.literal("Show All"), b -> {
+            filterMode = FilterMode.ALL;
+            scroll = 0;
+            clampScroll();
+        }).bounds(0, 0, wAll, h).build();
+        showActiveBtn = Button.builder(Component.literal("Show Active"), b -> {
+            filterMode = FilterMode.ACTIVE;
+            scroll = 0;
+            clampScroll();
+        }).bounds(0, 0, wAct, h).build();
+        showUnactiveBtn = Button.builder(Component.literal("Show Unactive"), b -> {
+            filterMode = FilterMode.INACTIVE;
+            scroll = 0;
+            clampScroll();
+        }).bounds(0, 0, wInact, h).build();
+        backBtn = Button.builder(Component.literal("Back"), b -> {
+            view = View.MAIN;
+            clampScroll();
+            layoutForCurrentView();
+            updateVisibility();
+        }).bounds(0, 0, 70, 20).build();
         addRenderableWidget(showAllBtn);
         addRenderableWidget(showActiveBtn);
         addRenderableWidget(showUnactiveBtn);
@@ -129,15 +169,24 @@ public class MateSignalConfigScreen extends Screen {
 
         Set<String> enabled = new HashSet<>();
         var cfg = Config.MOBS.get();
-        if (cfg != null) for (String s : cfg) if (s != null && !s.isBlank()) enabled.add(s.toLowerCase(Locale.ROOT));
+        if (cfg != null) {
+            for (String s : cfg) {
+                if (s != null && !s.isBlank()) {
+                    enabled.add(s.toLowerCase(Locale.ROOT));
+                }
+            }
+        }
 
         for (EntityType<?> t : all) {
             ResourceLocation id = ForgeRegistries.ENTITY_TYPES.getKey(t);
-            if (id == null) continue;
+            if (id == null) {
+                continue;
+            }
             String full = id.toString();
             String name = id.getPath();
             boolean sel = enabled.isEmpty() ? ("minecraft:creeper".equals(full) || "minecraft:zombie".equals(full)) : enabled.contains(full) || enabled.contains(name);
-            CycleButton<Boolean> toggle = CycleButton.onOffBuilder(sel).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b, val) -> {});
+            CycleButton<Boolean> toggle = CycleButton.onOffBuilder(sel).displayOnlyValue().create(0, 0, 64, 18, Component.literal(""), (b, val) -> {
+            });
             addRenderableWidget(toggle);
             entries.add(new Entry(full, name, toggle));
         }
@@ -152,6 +201,7 @@ public class MateSignalConfigScreen extends Screen {
         clampScroll();
     }
 
+    @Override
     public void resize(Minecraft mc, int w, int h) {
         super.resize(mc, w, h);
         layoutForCurrentView();
@@ -160,7 +210,9 @@ public class MateSignalConfigScreen extends Screen {
 
     private void layoutForCurrentView() {
         int cw = Math.min(700, this.width - 2 * outerPad);
-        if (cw < 300) cw = this.width - 2 * outerPad;
+        if (cw < 300) {
+            cw = this.width - 2 * outerPad;
+        }
         contentWidth = cw;
         contentLeft = (this.width - contentWidth) / 2;
         contentRight = contentLeft + contentWidth;
@@ -176,8 +228,12 @@ public class MateSignalConfigScreen extends Screen {
 
     private boolean passesFilter(Entry e) {
         boolean on = e.toggle.getValue();
-        if (filterMode == FilterMode.ALL) return true;
-        if (filterMode == FilterMode.ACTIVE) return on;
+        if (filterMode == FilterMode.ALL) {
+            return true;
+        }
+        if (filterMode == FilterMode.ACTIVE) {
+            return on;
+        }
         return !on;
     }
 
@@ -191,12 +247,18 @@ public class MateSignalConfigScreen extends Screen {
 
     private int filteredCount() {
         int c = 0;
-        for (Entry e : entries) if (passesFilter(e)) c++;
+        for (Entry e : entries) {
+            if (passesFilter(e)) {
+                c++;
+            }
+        }
         return c;
     }
 
     private int contentHeight() {
-        if (view == View.MOBS) return filteredCount() * rowH;
+        if (view == View.MOBS) {
+            return filteredCount() * rowH;
+        }
         return mainContentHeight();
     }
 
@@ -211,7 +273,9 @@ public class MateSignalConfigScreen extends Screen {
     private int thumbH() {
         int vh = viewHeight();
         int ch = contentHeight();
-        if (ch <= 0) return vh;
+        if (ch <= 0) {
+            return vh;
+        }
         return Math.max(16, vh * vh / ch);
     }
 
@@ -219,40 +283,61 @@ public class MateSignalConfigScreen extends Screen {
         int ms = maxScroll();
         int vh = viewHeight();
         int th = thumbH();
-        if (ms == 0) return listTop;
-        return listTop + (int)((vh - th) * (scroll / (double)ms));
+        if (ms == 0) {
+            return listTop;
+        }
+        return listTop + (int) ((vh - th) * (scroll / (double) ms));
     }
 
     private void setScrollFromThumbY(int mouseY) {
         int vh = viewHeight();
         int th = thumbH();
         int ms = maxScroll();
-        if (ms == 0) { scroll = 0; return; }
+        if (ms == 0) {
+            scroll = 0;
+            return;
+        }
         double rel = (mouseY - listTop - th * 0.5) / Math.max(1, (vh - th));
         scroll = rel * ms;
         clampScroll();
     }
 
     private void clampScroll() {
-        if (scroll < 0) scroll = 0;
+        if (scroll < 0) {
+            scroll = 0;
+        }
         int ms = maxScroll();
-        if (scroll > ms) scroll = ms;
+        if (scroll > ms) {
+            scroll = ms;
+        }
     }
 
     private void step(int d) {
         int v;
-        try { v = Integer.parseInt(radiusBox.getValue().trim()); } catch (Exception e) { v = Config.RADIUS.get(); }
+        try {
+            v = Integer.parseInt(radiusBox.getValue().trim());
+        } catch (NumberFormatException e) {
+            v = Config.RADIUS.get();
+        }
         v = Math.max(3, Math.min(64, v + d));
         radiusBox.setValue(Integer.toString(v));
     }
 
     private void save() {
         int r;
-        try { r = Integer.parseInt(radiusBox.getValue().trim()); } catch (Exception e) { r = 10; }
+        try {
+            r = Integer.parseInt(radiusBox.getValue().trim());
+        } catch (NumberFormatException e) {
+            r = 10;
+        }
         r = Math.max(3, Math.min(64, r));
         Config.RADIUS.set(r);
         List<String> list = new ArrayList<>();
-        for (Entry e : entries) if (e.toggle.getValue()) list.add(e.id);
+        for (Entry e : entries) {
+            if (e.toggle.getValue()) {
+                list.add(e.id);
+            }
+        }
         Config.MOBS.set(list);
         Config.DAY_MESSAGE.set(dayBtn.getValue());
         Config.NIGHT_MESSAGE.set(nightBtn.getValue());
@@ -266,6 +351,7 @@ public class MateSignalConfigScreen extends Screen {
         Minecraft.getInstance().setScreen(parent);
     }
 
+    @Override
     public void onClose() {
         Minecraft.getInstance().setScreen(parent);
     }
@@ -299,7 +385,9 @@ public class MateSignalConfigScreen extends Screen {
         showUnactiveBtn.visible = !main;
         backBtn.visible = !main;
 
-        for (Entry e : entries) e.toggle.visible = !main;
+        for (Entry e : entries) {
+            e.toggle.visible = !main;
+        }
     }
 
     private void layoutMainControls(int offY) {
@@ -361,7 +449,7 @@ public class MateSignalConfigScreen extends Screen {
     }
 
     private void layoutMobControls() {
-        int gap = 10, wAll = 100, wAct = 120, wInact = 130, h = 20;
+        int gap = 10, wAll = 100, wAct = 120, wInact = 130;
         int totalW = wAll + gap + wAct + gap + wInact;
         int sx = contentLeft + (contentWidth - totalW) / 2;
         int fy = 80;
@@ -383,6 +471,8 @@ public class MateSignalConfigScreen extends Screen {
         g.fill(0, 0, this.width, this.height, 0xFF101010);
     }
 
+    @Override
+
     public void render(GuiGraphics g, int mx, int my, float pt) {
         boolean leftDown = Minecraft.getInstance().mouseHandler.isLeftPressed();
         int bx = contentRight - scrollbarW;
@@ -393,37 +483,65 @@ public class MateSignalConfigScreen extends Screen {
         if (leftDown && !leftWasDown) {
             if (mx >= bx && mx <= bx + scrollbarW && my >= by0 && my <= by1) {
                 draggingScrollbar = true;
-                if (my < ty || my > ty + th) setScrollFromThumbY((int) my);
+                if (my < ty || my > ty + th) {
+                    setScrollFromThumbY((int) my);
+                }
             }
         }
-        if (draggingScrollbar && leftDown) setScrollFromThumbY((int) my);
-        if (draggingScrollbar && !leftDown) draggingScrollbar = false;
+        if (draggingScrollbar && leftDown) {
+            setScrollFromThumbY((int) my);
+        }
+        if (draggingScrollbar && !leftDown) {
+            draggingScrollbar = false;
+        }
         leftWasDown = leftDown;
 
         this.renderBackground(g, mx, my, pt);
 
         if (view == View.MAIN) {
             layoutForCurrentView();
-            int offY = -(int)scroll;
+            int offY = -(int) scroll;
             layoutMainControls(offY);
 
             g.drawCenteredString(this.font, "MateSignal", this.width / 2, 20, 0xFFFFFFFF);
             int labelX = contentLeft;
 
             int yBlockLbl = 92 + offY;
-            if (yBlockLbl >= listTop - 16 && yBlockLbl <= listBottom) g.drawString(this.font, "Block Radius", labelX, yBlockLbl, 0xFFFFFFFF);
+            if (yBlockLbl >= listTop - 16 && yBlockLbl <= listBottom) {
+                g.drawString(this.font, "Block Radius", labelX, yBlockLbl, 0xFFFFFFFF);
+            }
 
             int y0 = 110 + offY;
-            if (y0 + 4 >= listTop - 16 && y0 + 4 <= listBottom) g.drawString(this.font, "Day Time Message", labelX, y0 + 4, 0xFFFFFFFF);
-            if (y0 + 26 >= listTop - 16 && y0 + 26 <= listBottom) g.drawString(this.font, "Night Time Message", labelX, y0 + 26, 0xFFFFFFFF);
-            if (y0 + 48 >= listTop - 16 && y0 + 48 <= listBottom) g.drawString(this.font, "Low Health Message", labelX, y0 + 48, 0xFFFFFFFF);
-            if (y0 + 70 >= listTop - 16 && y0 + 70 <= listBottom) g.drawString(this.font, "Low Hunger Message", labelX, y0 + 70, 0xFFFFFFFF);
-            if (y0 + 92 >= listTop - 16 && y0 + 92 <= listBottom) g.drawString(this.font, "Death Message", labelX, y0 + 92, 0xFFFFFFFF);
-            if (y0 + 114 >= listTop - 16 && y0 + 114 <= listBottom) g.drawString(this.font, "Rain Start Message", labelX, y0 + 114, 0xFFFFFFFF);
-            if (y0 + 136 >= listTop - 16 && y0 + 136 <= listBottom) g.drawString(this.font, "Drowning 50% Air", labelX, y0 + 136, 0xFFFFFFFF);
-            if (y0 + 158 >= listTop - 16 && y0 + 158 <= listBottom) g.drawString(this.font, "Sleep Message", labelX, y0 + 158, 0xFFFFFFFF);
-            if (y0 + 180 >= listTop - 16 && y0 + 180 <= listBottom) g.drawString(this.font, "Crafting Message (30%)", labelX, y0 + 180, 0xFFFFFFFF);
-            if (y0 + 202 >= listTop - 16 && y0 + 202 <= listBottom) g.drawString(this.font, "Configure Mob Messages", labelX, y0 + 202, 0xFFFFFFFF);
+            if (y0 + 4 >= listTop - 16 && y0 + 4 <= listBottom) {
+                g.drawString(this.font, "Day Time Message", labelX, y0 + 4, 0xFFFFFFFF);
+            }
+            if (y0 + 26 >= listTop - 16 && y0 + 26 <= listBottom) {
+                g.drawString(this.font, "Night Time Message", labelX, y0 + 26, 0xFFFFFFFF);
+            }
+            if (y0 + 48 >= listTop - 16 && y0 + 48 <= listBottom) {
+                g.drawString(this.font, "Low Health Message", labelX, y0 + 48, 0xFFFFFFFF);
+            }
+            if (y0 + 70 >= listTop - 16 && y0 + 70 <= listBottom) {
+                g.drawString(this.font, "Low Hunger Message", labelX, y0 + 70, 0xFFFFFFFF);
+            }
+            if (y0 + 92 >= listTop - 16 && y0 + 92 <= listBottom) {
+                g.drawString(this.font, "Death Message", labelX, y0 + 92, 0xFFFFFFFF);
+            }
+            if (y0 + 114 >= listTop - 16 && y0 + 114 <= listBottom) {
+                g.drawString(this.font, "Rain Start Message", labelX, y0 + 114, 0xFFFFFFFF);
+            }
+            if (y0 + 136 >= listTop - 16 && y0 + 136 <= listBottom) {
+                g.drawString(this.font, "Drowning 50% Air", labelX, y0 + 136, 0xFFFFFFFF);
+            }
+            if (y0 + 158 >= listTop - 16 && y0 + 158 <= listBottom) {
+                g.drawString(this.font, "Sleep Message", labelX, y0 + 158, 0xFFFFFFFF);
+            }
+            if (y0 + 180 >= listTop - 16 && y0 + 180 <= listBottom) {
+                g.drawString(this.font, "Crafting Message (30%)", labelX, y0 + 180, 0xFFFFFFFF);
+            }
+            if (y0 + 202 >= listTop - 16 && y0 + 202 <= listBottom) {
+                g.drawString(this.font, "Configure Mob Messages", labelX, y0 + 202, 0xFFFFFFFF);
+            }
 
             applyViewportVisibilityForMain();
 
@@ -444,15 +562,25 @@ public class MateSignalConfigScreen extends Screen {
         layoutMobControls();
         g.drawCenteredString(this.font, "Mob Messages", this.width / 2, 20, 0xFFFFFFFF);
 
-        int startIndex = (int)Math.floor(scroll / rowH);
-        int yStart = listTop - (int)(scroll % rowH);
+        int startIndex = (int) Math.floor(scroll / rowH);
+        int yStart = listTop - (int) (scroll % rowH);
 
         int skipped = startIndex;
         int y = yStart;
         for (Entry e : entries) {
-            if (!passesFilter(e)) { e.toggle.visible = false; continue; }
-            if (skipped > 0) { skipped--; e.toggle.visible = false; continue; }
-            if (y > listBottom) { e.toggle.visible = false; continue; }
+            if (!passesFilter(e)) {
+                e.toggle.visible = false;
+                continue;
+            }
+            if (skipped > 0) {
+                skipped--;
+                e.toggle.visible = false;
+                continue;
+            }
+            if (y > listBottom) {
+                e.toggle.visible = false;
+                continue;
+            }
             e.toggle.visible = true;
             e.toggle.setX(listRight - 70);
             e.toggle.setY(y + 1);
@@ -472,9 +600,11 @@ public class MateSignalConfigScreen extends Screen {
     }
 
     private static class Entry {
+
         final String id;
         final String name;
         final CycleButton<Boolean> toggle;
+
         Entry(String id, String name, CycleButton<Boolean> toggle) {
             this.id = id;
             this.name = name;

@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[51,)"
+loaderVersion="[47,)"
 license="MIT"
 
 [[mods]]
@@ -13,13 +13,13 @@ authors="Shiny"
 [[dependencies.matesignal]]
 modId="forge"
 mandatory=true
-versionRange="[51,)"
+versionRange="[47,)"
 ordering="NONE"
 side="CLIENT"
 
 [[dependencies.matesignal]]
 modId="minecraft"
 mandatory=true
-versionRange="[1.21,1.22)"
+versionRange="[1.20.1,1.21)"
 ordering="NONE"
 side="CLIENT"

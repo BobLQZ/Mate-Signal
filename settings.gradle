@@ -1,6 +1,14 @@
 pluginManagement {
     repositories {
+        maven {
+            name = 'Aliyun Gradle Plugin'
+            url = 'https://maven.aliyun.com/repository/gradle-plugin'
+        }
         gradlePluginPortal()
+        maven {
+            name = 'MinecraftForge (BMCLAPI)'
+            url = 'https://bmclapi2.bangbang93.com/maven/'
+        }
         maven {
             name = 'MinecraftForge'
             url = 'https://maven.minecraftforge.net/'

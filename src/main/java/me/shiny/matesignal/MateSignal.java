@@ -1,9 +1,10 @@
 package me.shiny.matesignal;
 
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.event.TickEvent;
 
@@ -35,6 +36,7 @@ import java.util.Random;
 
 @Mod("matesignal")
 public class MateSignal {
+
     private static final InetSocketAddress TARGET = new InetSocketAddress("127.0.0.1", 32145);
 
     private static final Set<UUID> inside = new HashSet<>();
@@ -57,14 +59,18 @@ public class MateSignal {
     private long lastCraftMsgAt = 0L;
     private final Random rng = new Random();
 
-    public MateSignal(FMLJavaModLoadingContext context) {
-        context.registerConfig(ModConfig.Type.CLIENT, Config.SPEC);
-        context.registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
+    public MateSignal() {
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.SPEC);
+        ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
                 () -> new ConfigScreenHandler.ConfigScreenFactory((mc, parent) -> new MateSignalConfigScreen(parent)));
-        TickEvent.ClientTickEvent.Post.BUS.addListener(this::onClientTick);
+        // 1.20.1 (Forge 47) does not have the per-event `BUS` field, use the shared event bus instead.
+        MinecraftForge.EVENT_BUS.addListener(this::onClientTick);
     }
 
-    private void onClientTick(TickEvent.ClientTickEvent.Post e) {
+    private void onClientTick(TickEvent.ClientTickEvent e) {
+        if (e.phase != TickEvent.Phase.END) {
+            return;
+        }
         Minecraft mc = Minecraft.getInstance();
         Player p = mc.player;
         Level level = mc.level;
@@ -87,15 +93,21 @@ public class MateSignal {
 
         long t = level.getDayTime() % 24000L;
         if (lastTick >= 0) {
-            if (Config.DAY_MESSAGE.get() && crossed(lastTick, t, 23500L)) send("{\"type\":\"time_day\"}");
-            if (Config.NIGHT_MESSAGE.get() && crossed(lastTick, t, 12750L)) send("{\"type\":\"time_night\"}");
+            if (Config.DAY_MESSAGE.get() && crossed(lastTick, t, 23500L)) {
+                send("{\"type\":\"time_day\"}");
+            }
+            if (Config.NIGHT_MESSAGE.get() && crossed(lastTick, t, 12750L)) {
+                send("{\"type\":\"time_night\"}");
+            }
         }
         lastTick = t;
 
         float hp = p.getHealth();
         boolean lowHp = hp <= 6.0f;
         if (Config.LOW_HEALTH_MESSAGE.get()) {
-            if (lowHp && !wasLowHp) send("{\"type\":\"low_health\",\"hp\":" + String.format(Locale.ROOT,"%.1f", hp) + "}");
+            if (lowHp && !wasLowHp) {
+                send("{\"type\":\"low_health\",\"hp\":" + String.format(Locale.ROOT, "%.1f", hp) + "}");
+            }
         }
         wasLowHp = lowHp;
 
@@ -103,19 +115,25 @@ public class MateSignal {
         int hunger = food.getFoodLevel();
         boolean lowHung = hunger < 10;
         if (Config.LOW_HUNGER_MESSAGE.get()) {
-            if (lowHung && !wasLowHunger) send("{\"type\":\"low_hunger\",\"hunger\":" + hunger + "}");
+            if (lowHung && !wasLowHunger) {
+                send("{\"type\":\"low_hunger\",\"hunger\":" + hunger + "}");
+            }
         }
         wasLowHunger = lowHung;
 
         boolean rainingNow = level.isRainingAt(p.blockPosition());
         if (Config.RAIN_START_MESSAGE.get()) {
-            if (rainingNow && !wasRaining) send("{\"type\":\"rain_start\"}");
+            if (rainingNow && !wasRaining) {
+                send("{\"type\":\"rain_start\"}");
+            }
         }
         wasRaining = rainingNow;
 
         boolean deadNow = p.isDeadOrDying() || hp <= 0.0f;
         if (Config.DEATH_MESSAGE.get()) {
-            if (deadNow && !wasDead) send("{\"type\":\"death\"}");
+            if (deadNow && !wasDead) {
+                send("{\"type\":\"death\"}");
+            }
         }
         wasDead = deadNow && hp <= 0.0f;
 
@@ -123,13 +141,21 @@ public class MateSignal {
         int air = p.getAirSupply();
         boolean halfDrownNow = air <= (maxAir / 2) && air < maxAir && p.isUnderWater();
         if (Config.DROWNING_HALF_MESSAGE.get()) {
-            if (halfDrownNow && !wasHalfDrowning) send("{\"type\":\"drowning_half\",\"air\":" + air + ",\"max\":" + maxAir + "}");
+            if (halfDrownNow && !wasHalfDrowning) {
+                send("{\"type\":\"drowning_half\",\"air\":" + air + ",\"max\":" + maxAir + "}");
+            }
         }
-        if (air > (int)(maxAir * 0.8f)) wasHalfDrowning = false; else wasHalfDrowning = halfDrownNow;
+        if (air > (int) (maxAir * 0.8f)) {
+            wasHalfDrowning = false;
+        } else {
+            wasHalfDrowning = halfDrownNow;
+        }
 
         boolean sleepingNow = p.isSleeping();
         if (Config.SLEEP_MESSAGE.get()) {
-            if (sleepingNow && !wasSleeping) send("{\"type\":\"sleep_start\"}");
+            if (sleepingNow && !wasSleeping) {
+                send("{\"type\":\"sleep_start\"}");
+            }
         }
         wasSleeping = sleepingNow;
 
@@ -148,26 +174,42 @@ public class MateSignal {
 
         Set<String> allow = new HashSet<>();
         var cfg = Config.MOBS.get();
-        if (cfg != null) for (String s : cfg) if (s != null && !s.isBlank()) allow.add(s.toLowerCase(Locale.ROOT));
+        if (cfg != null) {
+            for (String s : cfg) {
+                if (s != null && !s.isBlank()) {
+                    allow.add(s.toLowerCase(Locale.ROOT));
+                }
+            }
+        }
 
         scratch.clear();
         for (Entity en : ents) {
             EntityType<?> type = en.getType();
-            if (type.getCategory() != MobCategory.MONSTER) continue;
-            if (!en.isAlive()) continue;
+            if (type.getCategory() != MobCategory.MONSTER) {
+                continue;
+            }
+            if (!en.isAlive()) {
+                continue;
+            }
 
             double d2 = en.distanceToSqr(p);
-            if (d2 > r2) continue;
+            if (d2 > r2) {
+                continue;
+            }
 
             ResourceLocation rid = ForgeRegistries.ENTITY_TYPES.getKey(type);
-            if (rid == null) continue;
+            if (rid == null) {
+                continue;
+            }
             String typeId = rid.toString();
             String name = rid.getPath();
 
             if (!allow.isEmpty()) {
                 String ln = name.toLowerCase(Locale.ROOT);
                 String lid = typeId.toLowerCase(Locale.ROOT);
-                if (!allow.contains(ln) && !allow.contains(lid)) continue;
+                if (!allow.contains(ln) && !allow.contains(lid)) {
+                    continue;
+                }
             }
 
             UUID id = en.getUUID();
@@ -175,14 +217,16 @@ public class MateSignal {
 
             if (!inside.contains(id)) {
                 inside.add(id);
-                int dist = (int)Math.floor(Math.sqrt(d2));
+                int dist = (int) Math.floor(Math.sqrt(d2));
                 long ts = System.currentTimeMillis();
                 String json = "{\"type\":\"mob_proximity\",\"phase\":\"enter\",\"uuid\":\"" + id + "\",\"id\":\"" + typeId + "\",\"name\":\"" + name + "\",\"distance\":" + dist + ",\"ts\":" + ts + "}";
                 send(json);
             }
         }
 
-        if (!inside.isEmpty()) inside.retainAll(scratch);
+        if (!inside.isEmpty()) {
+            inside.retainAll(scratch);
+        }
     }
 
     private void observeCrafting(Minecraft mc, Player p) {
@@ -196,13 +240,17 @@ public class MateSignal {
         }
 
         AbstractContainerMenu menu = p.containerMenu;
-        if (menu == null) return;
+        if (menu == null) {
+            return;
+        }
 
         int sid = menu.getStateId();
         boolean carriedNow = !menu.getCarried().isEmpty();
 
         long now = System.currentTimeMillis();
-        if (carriedNow && !lastCarriedNonEmpty) lastCarriedBeganAt = now;
+        if (carriedNow && !lastCarriedNonEmpty) {
+            lastCarriedBeganAt = now;
+        }
 
         boolean carriedReleasedQuick = !carriedNow && lastCarriedNonEmpty && (now - lastCarriedBeganAt) <= 1500L;
         boolean stateChanged = lastMenuStateId != -1 && sid != lastMenuStateId;
@@ -215,15 +263,21 @@ public class MateSignal {
             }
         }
 
-        if (sid != lastMenuStateId) craftingObserved = false;
+        if (sid != lastMenuStateId) {
+            craftingObserved = false;
+        }
 
         lastCarriedNonEmpty = carriedNow;
         lastMenuStateId = sid;
     }
 
     private static boolean crossed(long last, long now, long threshold) {
-        if (last == now) return false;
-        if (last < now) return last < threshold && now >= threshold;
+        if (last == now) {
+            return false;
+        }
+        if (last < now) {
+            return last < threshold && now >= threshold;
+        }
         return last < threshold || now >= threshold;
     }
 
@@ -232,6 +286,7 @@ public class MateSignal {
             byte[] b = json.getBytes(StandardCharsets.UTF_8);
             DatagramPacket pkt = new DatagramPacket(b, b.length, TARGET);
             s.send(pkt);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 }
