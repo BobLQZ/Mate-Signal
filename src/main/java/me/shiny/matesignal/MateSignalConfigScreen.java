@@ -10,7 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.*;
 
@@ -160,10 +160,16 @@ public class MateSignalConfigScreen extends Screen {
         addRenderableWidget(showUnactiveBtn);
         addRenderableWidget(backBtn);
 
-        List<EntityType<?>> all = new ArrayList<>(ForgeRegistries.ENTITY_TYPES.getValues());
+        List<EntityType<?>> all = new ArrayList<>();
+        for (ResourceLocation key : BuiltInRegistries.ENTITY_TYPE.keySet()) {
+            EntityType<?> t = BuiltInRegistries.ENTITY_TYPE.get(key);
+            if (t != null) {
+                all.add(t);
+            }
+        }
         all.removeIf(t -> t.getCategory() != MobCategory.MONSTER);
         all.sort(Comparator.comparing(t -> {
-            ResourceLocation id = ForgeRegistries.ENTITY_TYPES.getKey(t);
+            ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(t);
             return id == null ? "" : id.toString();
         }));
 
@@ -178,7 +184,7 @@ public class MateSignalConfigScreen extends Screen {
         }
 
         for (EntityType<?> t : all) {
-            ResourceLocation id = ForgeRegistries.ENTITY_TYPES.getKey(t);
+            ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(t);
             if (id == null) {
                 continue;
             }

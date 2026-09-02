@@ -1,17 +1,18 @@
 package me.shiny.matesignal;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.client.ConfigScreenHandler;
-import net.minecraftforge.event.TickEvent;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.neoforged.neoforge.common.NeoForge;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.CraftingScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.EntityType;
@@ -33,6 +34,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Random;
+import java.util.function.Supplier;
 
 @Mod("matesignal")
 public class MateSignal {
@@ -59,18 +61,15 @@ public class MateSignal {
     private long lastCraftMsgAt = 0L;
     private final Random rng = new Random();
 
-    public MateSignal() {
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.SPEC);
-        ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
-                () -> new ConfigScreenHandler.ConfigScreenFactory((mc, parent) -> new MateSignalConfigScreen(parent)));
-        // 1.20.1 (Forge 47) does not have the per-event `BUS` field, use the shared event bus instead.
-        MinecraftForge.EVENT_BUS.addListener(this::onClientTick);
+    public MateSignal(IEventBus modEventBus, ModContainer modContainer) {
+        modContainer.registerConfig(ModConfig.Type.CLIENT, Config.SPEC);
+        modContainer.registerExtensionPoint(IConfigScreenFactory.class,
+                (Supplier<IConfigScreenFactory>) () -> (container, parent) -> new MateSignalConfigScreen(parent));
+        // 1.21.1 NeoForge uses the shared game event bus for per-tick events.
+        NeoForge.EVENT_BUS.addListener(this::onClientTick);
     }
 
-    private void onClientTick(TickEvent.ClientTickEvent e) {
-        if (e.phase != TickEvent.Phase.END) {
-            return;
-        }
+    private void onClientTick(ClientTickEvent.Post e) {
         Minecraft mc = Minecraft.getInstance();
         Player p = mc.player;
         Level level = mc.level;
@@ -197,7 +196,7 @@ public class MateSignal {
                 continue;
             }
 
-            ResourceLocation rid = ForgeRegistries.ENTITY_TYPES.getKey(type);
+            ResourceLocation rid = BuiltInRegistries.ENTITY_TYPE.getKey(type);
             if (rid == null) {
                 continue;
             }

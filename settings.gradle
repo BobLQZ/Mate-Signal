@@ -6,12 +6,12 @@ pluginManagement {
         }
         gradlePluginPortal()
         maven {
-            name = 'MinecraftForge (BMCLAPI)'
+            name = 'NeoForged (BMCLAPI mirror)'
             url = 'https://bmclapi2.bangbang93.com/maven/'
         }
         maven {
-            name = 'MinecraftForge'
-            url = 'https://maven.minecraftforge.net/'
+            name = 'NeoForged'
+            url = 'https://maven.neoforged.net/releases'
         }
     }
 }

@@ -1,28 +1,29 @@
 package me.shiny.matesignal;
 
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 import java.util.List;
 
 public final class Config {
-    public static final ForgeConfigSpec SPEC;
-    public static final ForgeConfigSpec.IntValue RADIUS;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> MOBS;
-    public static final ForgeConfigSpec.BooleanValue DAY_MESSAGE;
-    public static final ForgeConfigSpec.BooleanValue NIGHT_MESSAGE;
-    public static final ForgeConfigSpec.BooleanValue LOW_HEALTH_MESSAGE;
-    public static final ForgeConfigSpec.BooleanValue LOW_HUNGER_MESSAGE;
-    public static final ForgeConfigSpec.BooleanValue DEATH_MESSAGE;
-    public static final ForgeConfigSpec.BooleanValue RAIN_START_MESSAGE;
-    public static final ForgeConfigSpec.BooleanValue DROWNING_HALF_MESSAGE;
-    public static final ForgeConfigSpec.BooleanValue SLEEP_MESSAGE;
-    public static final ForgeConfigSpec.BooleanValue CRAFTING_MESSAGE;
+    public static final ModConfigSpec SPEC;
+    public static final ModConfigSpec.IntValue RADIUS;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> MOBS;
+    public static final ModConfigSpec.BooleanValue DAY_MESSAGE;
+    public static final ModConfigSpec.BooleanValue NIGHT_MESSAGE;
+    public static final ModConfigSpec.BooleanValue LOW_HEALTH_MESSAGE;
+    public static final ModConfigSpec.BooleanValue LOW_HUNGER_MESSAGE;
+    public static final ModConfigSpec.BooleanValue DEATH_MESSAGE;
+    public static final ModConfigSpec.BooleanValue RAIN_START_MESSAGE;
+    public static final ModConfigSpec.BooleanValue DROWNING_HALF_MESSAGE;
+    public static final ModConfigSpec.BooleanValue SLEEP_MESSAGE;
+    public static final ModConfigSpec.BooleanValue CRAFTING_MESSAGE;
 
     static {
-        ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
+        ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         RADIUS = b.defineInRange("radius", 10, 3, 64);
         MOBS = b.defineListAllowEmpty(
-                List.of("mobs"),
+                "mobs",
                 () -> List.of("minecraft:creeper","minecraft:zombie"),
+                () -> "minecraft:creeper",
                 o -> o instanceof String s && !s.isBlank()
         );
         DAY_MESSAGE = b.define("dayMessage", true);
