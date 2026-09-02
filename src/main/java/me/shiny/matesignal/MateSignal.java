@@ -2,8 +2,8 @@ package me.shiny.matesignal;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.event.TickEvent;
 
@@ -57,9 +57,9 @@ public class MateSignal {
     private long lastCraftMsgAt = 0L;
     private final Random rng = new Random();
 
-    public MateSignal() {
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.SPEC);
-        ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
+    public MateSignal(FMLJavaModLoadingContext context) {
+        context.registerConfig(ModConfig.Type.CLIENT, Config.SPEC);
+        context.registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
                 () -> new ConfigScreenHandler.ConfigScreenFactory((mc, parent) -> new MateSignalConfigScreen(parent)));
         TickEvent.ClientTickEvent.Post.BUS.addListener(this::onClientTick);
     }
