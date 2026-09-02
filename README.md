@@ -53,3 +53,5 @@ This project does not include any advertisements or paid content.
 ![Screenshot 1](https://media.forgecdn.net/attachments/description/null/description_92b5c6bb-e82c-4c4a-ab3b-79572ffd0501.jpg)  
 ![Screenshot 2](https://media.forgecdn.net/attachments/description/null/description_06f29568-fa97-4c33-bbbe-7f2ec5c65bd3.jpg)  
 ![Screenshot 3](https://media.forgecdn.net/attachments/description/null/description_f0e0bd7c-d80f-4899-88a4-1f5b058db22c.jpg)
+
+所有内容均继承于 [shinyflvre/Mate-Signal](https://github.com/shinyflvre/Mate-Signal)
