@@ -28,9 +28,11 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Random;
@@ -44,12 +46,17 @@ public class MateSignal {
     private static final Set<UUID> inside = new HashSet<>();
     private static final Set<UUID> scratch = new HashSet<>();
 
+    /** Minimum gap before the same mob re-entry can fire again (avoids radius-edge flicker). */
+    private static final long MOB_REENTER_COOLDOWN_MS = 10_000L;
+    private final Map<UUID, Long> mobLastEnterAt = new HashMap<>();
+
     private Object lastDim = null;
     private boolean wasLowHp = false;
     private boolean wasLowHunger = false;
     private long lastTick = -1L;
 
-    private boolean wasRaining = false;
+    private boolean rainWeather = false;
+    private boolean rainNotified = false;
     private boolean wasDead = false;
     private boolean wasHalfDrowning = false;
     private boolean wasSleeping = false;
@@ -75,8 +82,10 @@ public class MateSignal {
         Level level = mc.level;
         if (p == null || level == null) {
             inside.clear();
+            mobLastEnterAt.clear();
             lastTick = -1L;
-            wasRaining = false;
+            rainWeather = false;
+            rainNotified = false;
             wasDead = false;
             wasHalfDrowning = false;
             wasSleeping = false;
@@ -86,7 +95,10 @@ public class MateSignal {
 
         if (lastDim == null || lastDim != level.dimension()) {
             inside.clear();
+            mobLastEnterAt.clear();
             lastTick = -1L;
+            rainWeather = false;
+            rainNotified = false;
             lastDim = level.dimension();
         }
 
@@ -120,13 +132,18 @@ public class MateSignal {
         }
         wasLowHunger = lowHung;
 
-        boolean rainingNow = level.isRainingAt(p.blockPosition());
+        boolean rainingWeather = level.isRaining();
+        boolean rainingAtPlayer = rainingWeather && level.isRainingAt(p.blockPosition());
+        if (rainingWeather && !rainWeather) {
+            rainNotified = false; // a fresh rainstorm has started
+        }
         if (Config.RAIN_START_MESSAGE.get()) {
-            if (rainingNow && !wasRaining) {
+            if (rainingWeather && rainingAtPlayer && !rainNotified) {
                 send("{\"type\":\"rain_start\"}");
+                rainNotified = true;
             }
         }
-        wasRaining = rainingNow;
+        rainWeather = rainingWeather;
 
         boolean deadNow = p.isDeadOrDying() || hp <= 0.0f;
         if (Config.DEATH_MESSAGE.get()) {
@@ -216,15 +233,23 @@ public class MateSignal {
 
             if (!inside.contains(id)) {
                 inside.add(id);
-                int dist = (int) Math.floor(Math.sqrt(d2));
                 long ts = System.currentTimeMillis();
-                String json = "{\"type\":\"mob_proximity\",\"phase\":\"enter\",\"uuid\":\"" + id + "\",\"id\":\"" + typeId + "\",\"name\":\"" + name + "\",\"distance\":" + dist + ",\"ts\":" + ts + "}";
-                send(json);
+                Long lastEnter = mobLastEnterAt.get(id);
+                if (lastEnter == null || ts - lastEnter >= MOB_REENTER_COOLDOWN_MS) {
+                    int dist = (int) Math.floor(Math.sqrt(d2));
+                    String json = "{\"type\":\"mob_proximity\",\"phase\":\"enter\",\"uuid\":\"" + id + "\",\"id\":\"" + typeId + "\",\"name\":\"" + name + "\",\"distance\":" + dist + ",\"ts\":" + ts + "}";
+                    send(json);
+                    mobLastEnterAt.put(id, ts);
+                }
             }
         }
 
         if (!inside.isEmpty()) {
             inside.retainAll(scratch);
+        }
+        if (mobLastEnterAt.size() > 256) {
+            long cutoff = System.currentTimeMillis() - MOB_REENTER_COOLDOWN_MS * 6L;
+            mobLastEnterAt.entrySet().removeIf(entry -> entry.getValue() < cutoff);
         }
     }
 
